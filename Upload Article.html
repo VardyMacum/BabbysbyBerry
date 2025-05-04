@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CITY CHRONICLES - Article Upload</title>
+  <style>
+    :root {
+      --bg-dark: #ffffff84;
+      --bg-card: #ffffff;
+      --primary: #6f06c4;
+      --accent: #0f7533;
+      --text-color: #2f3542;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .banner {
+      width: 100%;
+      text-align: center;
+      background-color: var(--primary);
+      padding: 25px 0;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .banner h1 {
+      font-size: 32px;
+      color: white;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .upload-container {
+      width: 100%;
+      max-width: 850px;
+      background-color: var(--bg-card);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+
+    textarea {
+      width: 100%;
+      height: 250px;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      color: #333;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    .image-upload-container {
+      border: 2px dashed var(--accent);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #444;
+      background-color: #fefefe;
+      cursor: pointer;
+    }
+
+    .uploaded-images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .draggable {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      object-fit: contain;
+      cursor: move;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: flex-start;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 22px;
+      font-size: 15px;
+      border: none;
+      border-radius: 25px;
+      background-color: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #e45a3d;
+    }
+
+    .btn.delete {
+      background-color: #ccc;
+      color: #222;
+    }
+
+    .btn.delete:hover {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    .article-list .article-item {
+      background-color: #f8f8f8;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      position: relative;
+      border-left: 4px solid var(--accent);
+    }
+
+    .article-item input[type="checkbox"] {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      transform: scale(1.2);
+    }
+
+    .article-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .article-image {
+      max-width: 250px;
+      flex-shrink: 0;
+    }
+
+    .article-image img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .article-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      line-height: 1.6;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .article-meta {
+      font-size: 14px;
+      color: #777;
+      margin-top: 10px;
+    }
+
+    @media screen and (max-width: 600px) {
+      .button-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .article-content {
+        flex-direction: column;
+      }
+
+      .article-image {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="banner">
+    <h1>Community Page Article</h1>
+  </div>
+
+  <div class="upload-container">
+    <div class="image-upload-container" onclick="document.getElementById('image-input').click()">
+      Click to upload one image only
+      <input type="file" id="image-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)"/>
+    </div>
+
+    <div class="uploaded-images" id="uploaded-images"></div>
+
+    <input type="text" id="author-name" placeholder="Enter your name" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 10px; border: 1px solid #ccc;"/>
+
+    <textarea id="article-input" placeholder="Type your article here... (Max: 15,000 words)" oninput="updateWordCount()"></textarea>
+
+    <div class="button-group">
+      <button class="btn" onclick="submitArticle()">Submit Article</button>
+      <button class="btn delete" onclick="deleteSelectedArticles()">Delete Selected</button>
+    </div>
+
+    <div id="article-list" class="article-list"></div>
+  </div>
+
+  <script>
+    const MAX_IMAGES = 1;
+    let imageFiles = [];
+
+    // Load articles from localStorage on page load
+    window.onload = function() {
+      const savedArticles = JSON.parse(localStorage.getItem('articles')) || [];
+      savedArticles.forEach(article => {
+        displayArticle(article);
+      });
+    };
+
+    function handleImageUpload(event) {
+      const files = Array.from(event.target.files);
+      const uploadedImagesContainer = document.getElementById('uploaded-images');
+
+      if (imageFiles.length + files.length > MAX_IMAGES) {
+        alert('Only one image is allowed.');
+        return;
+      }
+
+      const file = files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'draggable';
+          img.draggable = true;
+
+          img.addEventListener('dragstart', dragStart);
+          img.addEventListener('dragend', dragEnd);
+
+          uploadedImagesContainer.innerHTML = '';
+          uploadedImagesContainer.appendChild(img);
+          imageFiles = [file];
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    let dragItem = null;
+
+    function dragStart(e) {
+      dragItem = e.target;
+      e.dataTransfer.setData('text/plain', '');
+    }
+
+    function dragEnd(e) {
+      const container = e.target.parentNode;
+      const x = e.pageX - container.offsetLeft - e.target.width / 2;
+      const y = e.pageY - container.offsetTop - e.target.height / 2;
+      dragItem.style.position = 'absolute';
+      dragItem.style.left = `${x}px`;
+      dragItem.style.top = `${y}px`;
+      dragItem = null;
+    }
+
+    function updateWordCount() {
+      const text = document.getElementById('article-input').value.replace(/\n/g, ' ');
+      const words = text.match(/\b\w+\b/g) || [];
+      return words.length;
+    }
+
+    function submitArticle() {
+      const input = document.getElementById("article-input");
+      const articleText = input.value.trim();
+      const wordCount = updateWordCount();
+      const authorName = document.getElementById("author-name").value.trim();
+
+      if (!authorName) {
+        alert("Please enter your name.");
+        return;
+      }
+
+      if (wordCount < 500) {
+        alert("Your article is too short. Please write at least 500 words.");
+        return;
+      }
+
+      if (wordCount > 15000) {
+        alert("Maximum word limit exceeded (15,000 words). Please shorten your article.");
+        return;
+      }
+
+      if (articleText === "") {
+        alert("Please enter an article.");
+        return;
+      }
+
+      const article = {
+        text: articleText,
+        author: authorName,
+        image: document.getElementById('uploaded-images').querySelector('img') ? document.getElementById('uploaded-images').querySelector('img').src : null,
+        timestamp: new Date().toLocaleString()
+      };
+
+      saveArticleToLocalStorage(article);
+      displayArticle(article);
+
+      // Reset form after submission
+      input.value = "";
+      document.getElementById('uploaded-images').innerHTML = "";
+      document.getElementById('author-name').value = "";
+      imageFiles = [];
+    }
+
+    function displayArticle(article) {
+      const articleList = document.getElementById("article-list");
+      const articleDiv = document.createElement("div");
+      articleDiv.className = "article-item";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+
+      const articleContent = document.createElement("div");
+      articleContent.className = "article-content";
+
+      const imageContainer = document.createElement("div");
+      imageContainer.className = "article-image";
+      if (article.image) {
+        const img = document.createElement("img");
+        img.src = article.image;
+        imageContainer.appendChild(img);
+      }
+
+      const textContainer = document.createElement("div");
+      textContainer.className = "article-text";
+      const paragraphs = article.text.split(/\n+/);
+      paragraphs.forEach(para => {
+        const p = document.createElement("p");
+        p.textContent = para;
+        textContainer.appendChild(p);
+      });
+
+      articleContent.appendChild(imageContainer);
+      articleContent.appendChild(textContainer);
+      articleDiv.appendChild(articleContent);
+
+      const timestamp = document.createElement("div");
+      timestamp.className = "article-meta";
+      timestamp.textContent = `Published by ${article.author} on ${article.timestamp}`;
+      articleDiv.appendChild(timestamp);
+      
+      articleDiv.appendChild(checkbox);
+      articleList.appendChild(articleDiv);
+    }
+
+    function saveArticleToLocalStorage(article) {
+      const savedArticles = JSON.parse(localStorage.getItem('articles')) || [];
+      savedArticles.push(article);
+      localStorage.setItem('articles', JSON.stringify(savedArticles));
+    }
+
+    function deleteSelectedArticles() {
+      const articles = document.querySelectorAll(".article-item");
+      articles.forEach(article => {
+        const checkbox = article.querySelector("input[type='checkbox']");
+        if (checkbox.checked) {
+          article.remove();
+          removeArticleFromLocalStorage(article);
+        }
+      });
+    }
+
+    function removeArticleFromLocalStorage(article) {
+      const savedArticles = JSON.parse(localStorage.getItem('articles')) || [];
+      const updatedArticles = savedArticles.filter(savedArticle => savedArticle.timestamp !== article.querySelector('.article-meta').textContent.split("on ")[1]);
+      localStorage.setItem('articles', JSON.stringify(updatedArticles));
+    }
+  </script>
+</body>
+</html>

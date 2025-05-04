@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Split‑Screen MP4 Uploader</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #000000;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .devices {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px;
+      background: #ececec;
+    }
+
+    .device {
+      border: 12px solid #333;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      background: #000;
+    }
+
+    .device .screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+    }
+
+    .phone {
+      width: 360px;
+      height: 640px;
+    }
+
+    .laptop {
+      width: 1024px;
+      height: 630px;
+    }
+
+    .split-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      flex-direction: row;
+    }
+
+    .side-left {
+      flex: 0 0 35%;
+      background: linear-gradient(135deg, #000000, #a500e6);
+      color: #fff;
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .side-left h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    .instructions {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    .instructions p {
+      margin: 4px 0;
+    }
+
+    .side-left input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed rgba(255,255,255,0.7);
+      border-radius: 6px;
+      background: transparent;
+      color: #fff;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    .side-left input[type="file"]::-webkit-file-upload-button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .side-left .btn {
+      background: rgba(255, 255, 255, 0.8);
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      font-weight: 500;
+      transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .side-left .btn:hover {
+      background: #ffffff;
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .side-left .loader {
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid #fff;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+      display: none;
+    }
+
+    .side-left .preview {
+      flex: 1;
+      width: 100%;
+      margin-top: 10px;
+      overflow-y: auto;
+    }
+
+    .side-left .preview .file-preview {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      font-size: 0.95rem;
+    }
+
+    .side-left .message {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: #e0ffe0;
+    }
+
+    .side-right {
+      flex: 1;
+      padding: 30px;
+      background: #fafafa;
+      overflow-y: auto;
+    }
+
+    .side-right h2 {
+      margin-bottom: 20px;
+      color: #444;
+      font-size: 1.5rem;
+    }
+
+    .video-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow-y: auto;
+      max-height: 80vh;
+      padding: 10px;
+    }
+
+    .video-item {
+      background: #fff;
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .video-item:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 8px;
+      right: 8px;
+      height: 1px;
+      background: #ddd;
+    }
+
+    .video-item video {
+      max-width: 100%;
+      height: 500px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      object-fit: contain;
+    }
+
+    .video-item a.download-btn {
+      background: #2196F3;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, backdrop-filter 0.2s ease;
+      backdrop-filter: blur(0);
+      margin-top: 8px;
+    }
+
+    .video-item a.download-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 12px rgba(33,150,243,0.7);
+      backdrop-filter: blur(4px);
+    }
+
+    .video-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.85);
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .video-overlay.active {
+      display: flex;
+    }
+
+    .video-overlay video {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 6px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .split-container {
+        flex-direction: column;
+      }
+
+      .side-left {
+        width: 100%;
+        padding: 20px;
+        align-items: center;
+        text-align: center;
+      }
+
+      .side-right {
+        width: 100%;
+        padding: 20px;
+      }
+
+      .video-item a.download-btn {
+        padding: 6px 10px;
+      }
+
+      .video-item {
+        padding: 12px;
+      }
+    }
+  </style>
+  
+</head>
+<body>
+
+  <div class="split-container">
+  <!-- LEFT PANEL -->
+<div class="side-left">
+  <h1>Welcome to MP4 Uploader</h1>
+
+  <!-- Upload Instructions -->
+  <div class="instructions">
+    <p>• Uploaded video must be in MP4 format.</p>
+    <p>• Ensure good quality (HD resolution recommended).</p>
+    <p>• Maximum upload size: <strong>50 MB</strong>. Files exceeding this limit will be rejected.</p>
+  </div>
+
+  <input
+    type="file"
+    id="video-upload"
+    accept="video/mp4"
+    multiple
+    onchange="handleFile(event)"
+  />
+
+  <div id="loader" class="loader"></div>
+
+  <button class="btn" onclick="uploadVideos()">Upload Files</button>
+  <br></br>
+  <button class="btn" onclick="deleteSelected()">Delete Selected</button>
+
+  <div id="loader"></div>
+  <div id="message"></div>
+
+  <div id="preview" class="preview"></div>
+  <p id="message" class="message"></p>
+</div>
+
+    <!-- RIGHT PANEL -->
+    <div class="side-right">
+      <h2>Your Uploaded Videos</h2>
+      <div id="video-list" class="video-list"></div>
+    </div>
+  </div>
+
+  <script>
+    // IndexedDB setup
+    let db;
+    const DB_NAME    = 'VideoUploader';
+    const STORE_NAME = 'Videos';
+    const DB_VERSION = 1;
+  
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = () => reject('DB error');
+        request.onsuccess = () => {
+          db = request.result;
+          resolve(db);
+        };
+        request.onupgradeneeded = e => {
+          const _db = e.target.result;
+          _db.createObjectStore(STORE_NAME, { keyPath: 'name' });
+        };
+      });
+    }
+  
+    async function saveToDB(file) {
+      const _db = await openDB();
+      const tx = _db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).put({ name: file.name, blob: file });
+    }
+  
+    async function getAllFiles() {
+      const _db = await openDB();
+      return new Promise(resolve => {
+        const tx      = _db.transaction(STORE_NAME, 'readonly');
+        const request = tx.objectStore(STORE_NAME).getAll();
+        request.onsuccess = () => resolve(request.result);
+      });
+    }
+  
+    async function deleteFromDB(name) {
+      const _db = await openDB();
+      const tx = _db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).delete(name);
+    }
+  
+    // in-memory list
+    let uploadedFiles = [];
+  
+    function isValidVideo(file) {
+      return file && file.type === 'video/mp4';
+    }
+  
+    function handleFile(event) {
+      const files   = event.target.files;
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+  
+      if (files.length + uploadedFiles.length > 10) {
+        alert('You can only upload a maximum of 10 files.');
+        event.target.value = '';
+        return;
+      }
+  
+      Array.from(files).forEach(file => {
+        if (!isValidVideo(file)) {
+          alert('Please select a valid MP4 file.');
+        } else if (file.size > 50 * 1024 * 1024) {
+          alert(`${file.name} is larger than 50 MB and will be skipped.`);
+        } else {
+          const div = document.createElement('div');
+          div.classList.add('file-preview');
+          div.textContent = `Preview: ${file.name}`;
+          preview.appendChild(div);
+        }
+      });
+    }
+  
+    function renderList() {
+      const list = document.getElementById('video-list');
+      list.innerHTML = '';
+      uploadedFiles.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'video-item';
+  
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.dataset.index = idx;
+  
+        const span = document.createElement('span');
+        span.textContent = item.file.name;
+  
+        const vid = document.createElement('video');
+        vid.src = item.videoSrc;
+        vid.controls = true;
+        vid.addEventListener('loadedmetadata', () => {
+          if (vid.videoWidth > vid.videoHeight) {
+            vid.classList.add('landscape-video');
+          }
+        });
+  
+        const dl = document.createElement('a');
+        dl.href = item.videoSrc;
+        dl.download = item.file.name;
+        dl.className = 'download-btn';
+        dl.textContent = 'Download';
+  
+        div.append(cb, span, vid, dl);
+        list.appendChild(div);
+      });
+    }
+  
+    // --- NEW: resolution validator ---
+    function validateResolution(file) {
+      return new Promise(resolve => {
+        const tmp = document.createElement('video');
+        tmp.preload = 'metadata';
+        tmp.onloadedmetadata = () => {
+          URL.revokeObjectURL(tmp.src);
+          const h = tmp.videoHeight;
+          // allow 720p up to 4K (2160p)
+          resolve(h >= 720 && h <= 2160);
+        };
+        tmp.onerror = () => resolve(false);
+        tmp.src = URL.createObjectURL(file);
+      });
+    }
+  
+    async function uploadVideos() {
+      const input   = document.getElementById('video-upload');
+      const files   = Array.from(input.files);
+      const loader  = document.getElementById('loader');
+      const message = document.getElementById('message');
+  
+      if (!files.length) {
+        alert('Please select at least one file to upload.');
+        return;
+      }
+  
+      loader.style.display = 'block';
+      message.textContent = '';
+  
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+  
+        if (!isValidVideo(file)) continue;
+        if (file.size > 50 * 1024 * 1024) continue;
+  
+        // validate resolution before uploading
+        const ok = await validateResolution(file);
+        if (!ok) {
+          alert(`${file.name} resolution must be between 720p and 4K. Upload skipped.`);
+          continue;
+        }
+  
+        // simulate progressive delay
+        await new Promise(res => setTimeout(res, 800 * i));
+  
+        const src = URL.createObjectURL(file);
+        uploadedFiles.push({ file, videoSrc: src });
+        await saveToDB(file);
+        renderList();
+      }
+  
+      loader.style.display = 'none';
+      message.textContent = 'Files uploaded successfully!';
+      input.value = '';
+      document.getElementById('preview').innerHTML = '';
+    }
+  
+    async function deleteSelected() {
+      const boxes = document.querySelectorAll('.video-item input:checked');
+      if (!boxes.length) {
+        alert('No files selected for deletion.');
+        return;
+      }
+      const toRemove = Array.from(boxes)
+        .map(cb => +cb.dataset.index)
+        .sort((a,b) => b-a);
+      for (let idx of toRemove) {
+        const rem = uploadedFiles.splice(idx,1)[0];
+        await deleteFromDB(rem.file.name);
+      }
+      renderList();
+      alert(`${toRemove.length} video(s) deleted successfully.`);
+    }
+  
+    // on load
+    window.onload = async () => {
+      const files = await getAllFiles();
+      uploadedFiles = files.map(obj => ({
+        file:     obj.blob,
+        videoSrc: URL.createObjectURL(obj.blob),
+      }));
+      renderList();
+    };
+  </script>
+  
+
+</body>
+</html>
