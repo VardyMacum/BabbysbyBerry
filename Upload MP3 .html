@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drag and Drop MP3 Upload</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
+  
+    body {
+      background: linear-gradient(135deg, #0e0e0e 0%, #1c1c1c 100%);
+      padding: 30px;
+      margin: 0;
+      font-family: 'Ubuntu', sans-serif;
+    }
+  
+    * {
+      box-sizing: border-box;
+    }
+  
+    .container {
+      text-align: center;
+      max-width: 1500px;
+      min-height: 435px;
+      margin: auto;
+      border-radius: 20px;
+      padding: 25px 35px;
+      background: rgba(28, 28, 28, 0.7);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.05);
+    }
+  
+    @media (max-width: 768px) {
+      .container {
+        width: 100vw;
+        padding: 15px;
+        transform: translateX(-8vw);
+      }
+    }
+  
+    .header-section h1 {
+      font-weight: 700;
+      font-size: 2.2rem;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+  
+    .header-section p {
+      font-size: 1rem;
+      color: #bbbbbb;
+      margin: 0;
+    }
+  
+    .drop-section {
+      min-height: 260px;
+      border: 2px dashed #5e68d8;
+      background: linear-gradient(145deg, #2b2b3a, #1e1e28);
+      margin: 35px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      position: relative;
+      padding: 20px;
+    }
+  
+    .drop-section button {
+      background: linear-gradient(135deg, #5e68d8, #7a84f2);
+      color: white;
+      padding: 10px 28px;
+      border: none;
+      outline: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(94, 104, 216, 0.4);
+      transition: all 0.3s ease;
+    }
+  
+    .drop-section button:hover {
+      background: linear-gradient(145deg, #7a84f2, #5e68d8);
+      transform: scale(1.06);
+      box-shadow: 0 0 15px #7a84f2, 0 0 25px #a2b0ff;
+    }
+  
+    .drop-section input {
+      display: none;
+    }
+  
+    .list-section {
+      display: block;
+      text-align: left;
+      margin: 0 35px;
+      padding-bottom: 20px;
+    }
+  
+    .list-section .list-title {
+      font-size: 1.2rem;
+      color: #ffffff;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+  
+    .list {
+      counter-reset: file-counter;
+      padding-left: 35px;
+      position: relative;
+    }
+  
+    .list li {
+      counter-increment: file-counter;
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 20px 16px;
+      border-radius: 5px;
+      position: relative;
+      transition: all 0.25s ease-in-out;
+      width: 200px;
+    }
+  
+    @media (max-width: 768px) {
+      .list li {
+        transform: translateX(-2vw);
+        width: 150vw;
+      }
+    }
+  
+    .list li::before {
+      content: counter(file-counter) ".";
+      position: absolute;
+      left: -30px;
+      font-weight: bold;
+      color: #ffffff;
+      font-size: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  
+    .list li .col {
+      flex: 1;
+    }
+  
+    .list li .col:nth-child(1) {
+      flex: 0.1;
+      text-align: center;
+    }
+  
+    .list li .col:nth-child(2) {
+      flex: 0.6;
+      color: #ffffff;
+      font-size: 0.95rem;
+    }
+  
+    .list li .col .name {
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 250px;
+    }
+
+    
+  
+    .actions {
+      flex: 0.3;
+      display: flex;
+      justify-content: flex-end; /* Push buttons to the right */
+      gap: 12px; /* space between buttons */
+      margin-top: 20px;
+    }
+  
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .actions {
+        justify-content: flex-end;
+        margin-right: 80px;
+      }
+    }
+  
+    .actions button,
+    .actions a {
+  background: linear-gradient(135deg, #c258c6, #9c4cc2);
+  color: white;
+  width: 110px;
+  border: none;
+  padding: 8px 0; /* Adjusted horizontal padding */
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 5px 10px rgba(155, 89, 182, 0.4);
+  display: inline-block;
+  text-align: center;
+}
+
+  
+    .actions button:hover,
+    .actions a:hover {
+      transform: scale(1.01);
+      background: linear-gradient(135deg, #a64baf, #7e34a3);
+      box-shadow: 0 0 15px  #7a84f2, 0 0 25px  #7a84f2;
+    }
+  
+    .delete-btn {
+      background: linear-gradient(135deg, #ff4c4c, #c0392b);
+    }
+  
+    .delete-btn:hover {
+      background: linear-gradient(135deg, #e74c3c, #a93226);
+      box-shadow: 0 0 15px #ff4c4c, 0 0 25px #c0392b;
+    }
+  
+    .audio-preview {
+      width: 100%;
+      margin-top: 8px;
+    }
+  
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+  
+    .col img {
+      width: 100px;
+      height: 100px;
+      margin-right: 10px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 2px solid #5e68d8;
+      transition: all 0.3s ease;
+    }
+  
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+  
+      .header-section h1 {
+        font-size: 1.6rem;
+      }
+  
+      .header-section p {
+        font-size: 0.9rem;
+      }
+  
+      .drop-section {
+        margin: 20px 10px;
+        padding: 15px;
+      }
+  
+      .drop-section .col:first-child,
+      .drop-section .col:last-child {
+        width: 100%;
+      }
+  
+      .list-section {
+        margin: 0 10px;
+      }
+  
+      .list {
+        padding-left: 15px;
+      }
+  
+      .list li {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+      }
+  
+      .actions {
+        order: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+      }
+  
+      .audio-preview {
+        order: 1;
+        width: 100%;
+        margin: 12px 0;
+      }
+    }
+  
+    @media (min-width: 769px) {
+      .container {
+        max-width: 1200px;
+      }
+  
+      .drop-section {
+        margin: 35px;
+      }
+  
+      .list li {
+        position: relative;
+        flex-direction: row;
+        align-items: center;
+      }
+  
+      .audio-wrapper {
+        position: relative;
+        height: 60px;
+        width: 10%;
+      }
+  
+      .actions {
+  display: flex;
+  flex-direction: row;
+  /* ditch justify-content */
+  position: relative;
+  left: 430px;    /* ← move right by 50px; use negative values to move left */
+  margin-top: 20px;
+}
+
+  
+      .audio-preview {
+        width: 400%;
+        order: initial;
+        margin-top: 20px;
+      }
+    }
+  
+    @media (max-width: 400px) {
+      .audio-wrapper {
+        width: 10%;
+        overflow-x: auto;
+      }
+  
+      .audio-preview {
+        order: 1;
+        width: 300%;
+        margin-top: 30px;
+      }
+    }
+  </style>
+</head>
+
+
+<body>
+  <div class="container">
+    <div class="header-section">
+      <h1>Upload MP3 Files</h1>
+      <p>Upload MP3 files (Max 20MB each) to share with your team.</p>
+    </div>
+    <div class="drop-section">
+      <div class="col">
+        <div class="cloud-icon">
+        
+        </div>
+        <span>
+            <img src="cloud.png" alt="MP3 Icon" style="width:120px; height:90px; vertical-align:middle; margin-right:8px;">
+            <br></br>
+            Drag & Drop your MP3 files here
+          </span>
+          
+        <br></br>
+        <span>OR</span>
+        <br></br>
+        
+        <button class="file-selector">Browse Files</button>
+        <input
+          type="file"
+          class="file-selector-input"
+          multiple
+          style="display: none;"
+        />
+
+        <input
+          type="file"
+          class="file-selector-input"
+          multiple
+          accept=".mp3"
+        />
+      </div>
+      <br></br>
+      <div class="col">
+        <div class="drop-here">Drop Here</div>
+      </div>
+    </div>
+    <div class="list-section">
+      <div class="list-title">Uploaded Files</div>
+      <ul class="list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const dropArea = document.querySelector('.drop-section');
+    const listSection = document.querySelector('.list-section');
+    const listContainer = document.querySelector('.list');
+    const fileSelector = document.querySelector('.file-selector');
+    const fileSelectorInput = document.querySelector('.file-selector-input');
+  
+    // IndexedDB setup
+    let db;
+    const DB_NAME = 'AudioUploader';
+    const STORE_NAME = 'Files';
+    const DB_VERSION = 1;
+  
+    const openDB = () => new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onerror = () => reject('DB error');
+      request.onsuccess = () => {
+        db = request.result;
+        resolve(db);
+      };
+      request.onupgradeneeded = e => {
+        const db = e.target.result;
+        db.createObjectStore(STORE_NAME, { keyPath: 'name' });
+      };
+    });
+  
+    const saveToDB = async file => {
+      const db = await openDB();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).put(file);
+    };
+  
+    const getAllFiles = async () => {
+      const db = await openDB();
+      return new Promise(resolve => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess = () => resolve(req.result);
+      });
+    };
+  
+    const deleteFromDB = async name => {
+      const db = await openDB();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).delete(name);
+    };
+  
+    // Browse button triggers input click
+    fileSelector.onclick = () => fileSelectorInput.click();
+  
+    // Only allow MP3 files; remove camera/video/document pickers
+    fileSelectorInput.setAttribute('accept', 'audio/mpeg,audio/mp3,.mp3');
+  
+    fileSelectorInput.onchange = () => {
+      [...fileSelectorInput.files].forEach(file => {
+        if (typeValidation(file) && sizeValidation(file)) {
+          uploadFile(file);
+        }
+      });
+      fileSelectorInput.value = '';
+    };
+  
+    dropArea.ondragover = e => {
+      e.preventDefault();
+      dropArea.classList.add('drag-over-effect');
+    };
+    dropArea.ondragleave = () => dropArea.classList.remove('drag-over-effect');
+    dropArea.ondrop = e => {
+      e.preventDefault();
+      dropArea.classList.remove('drag-over-effect');
+      [...e.dataTransfer.files].forEach(file => {
+        if (typeValidation(file) && sizeValidation(file)) {
+          uploadFile(file);
+        }
+      });
+    };
+  
+    function typeValidation(file) {
+      const mime = file.type.toLowerCase();
+      const name = file.name.toLowerCase();
+      const isMp3Mime = mime === 'audio/mpeg' || mime === 'audio/mp3';
+      const isMp3Ext = name.endsWith('.mp3');
+      if (isMp3Mime || isMp3Ext) return true;
+      alert(`"${file.name}" is not a valid MP3 file.`);
+      return false;
+    }
+  
+    function sizeValidation(file) {
+      const maxSize = 20 * 1024 * 1024; // 20MB
+      if (file.size <= maxSize) return true;
+      alert(`"${file.name}" exceeds 20MB size limit.`);
+      return false;
+    }
+  
+    function uploadFile(file) {
+      listSection.style.display = 'block';
+      const objectURL = URL.createObjectURL(file);
+  
+      const li = document.createElement('li');
+      li.classList.add('in-prog');
+      li.innerHTML = `
+        <div class="col">
+          <img src="Babysbyberry.png" alt="icon" />
+        </div>
+        <div class="col">
+          <div class="file-name">
+            <div class="name">${file.name}</div>
+          </div>
+        </div>
+        <div class="col actions">
+          <button class="preview-btn">Preview</button>
+          <a class="download-btn" download="${file.name}">Download</a>
+          <button class="delete-btn">Delete</button>
+        </div>
+      `;
+      listContainer.append(li);
+  
+      saveToDB({ name: file.name, size: file.size, blob: file });
+  
+      const xhr = new XMLHttpRequest();
+      const form = new FormData();
+      form.append('file', file);
+  
+      xhr.onload = () => {
+        li.classList.add('complete');
+        li.classList.remove('in-prog');
+      };
+  
+      xhr.open('POST', 'sender.php', true);
+      xhr.send(form);
+  
+      // Preview toggles into the 2nd column only
+      li.querySelector('.preview-btn').onclick = () => {
+        let audio = li.querySelector('audio.audio-preview');
+        if (!audio) {
+          audio = document.createElement('audio');
+          audio.controls = true;
+          audio.src = objectURL;
+          audio.classList.add('audio-preview');
+          li.querySelector('.col:nth-child(2)').append(audio);
+        } else {
+          audio.remove();
+        }
+      };
+  
+      li.querySelector('.download-btn').href = objectURL;
+  
+      li.querySelector('.delete-btn').onclick = async () => {
+        URL.revokeObjectURL(objectURL);
+        li.remove();
+        await deleteFromDB(file.name);
+      };
+    }
+  
+    window.onload = async () => {
+      const files = await getAllFiles();
+      if (files.length > 0) listSection.style.display = 'block';
+      files.forEach(fileObj => {
+        const objectURL = URL.createObjectURL(fileObj.blob);
+        const li = document.createElement('li');
+        li.classList.add('complete');
+        li.innerHTML = `
+          <div class="col">
+            <img src="Babysbyberry.png" alt="icon" />
+          </div>
+          <div class="col">
+            <div class="file-name">
+              <div class="name">${fileObj.name}</div>
+            </div>
+          </div>
+          <div class="col actions">
+            <button class="preview-btn">Preview</button>
+            <a class="download-btn" href="${objectURL}" download="${fileObj.name}">Download</a>
+            <button class="delete-btn">Delete</button>
+          </div>
+        `;
+        listContainer.append(li);
+  
+        // Same stable-preview logic for persisted files
+        li.querySelector('.preview-btn').onclick = () => {
+          let audio = li.querySelector('audio.audio-preview');
+          if (!audio) {
+            audio = document.createElement('audio');
+            audio.controls = true;
+            audio.src = objectURL;
+            audio.classList.add('audio-preview');
+            li.querySelector('.col:nth-child(2)').append(audio);
+          } else {
+            audio.remove();
+          }
+        };
+  
+        li.querySelector('.delete-btn').onclick = async () => {
+          URL.revokeObjectURL(objectURL);
+          li.remove();
+          await deleteFromDB(fileObj.name);
+        };
+      });
+    };
+  </script>
+  
+</body>
+</html>
